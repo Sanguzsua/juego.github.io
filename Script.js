@@ -40,6 +40,7 @@ function gameLoop() {
 function Snake() {
   this.snakeArray = [{x: 5, y: 5}];
   this.direction = 'RIGHT';
+  this.nextDirection = 'RIGHT'; // Para evitar movimientos simultáneos
 
   this.draw = function() {
     this.snakeArray.forEach((segment, index) => {
@@ -49,6 +50,7 @@ function Snake() {
   };
 
   this.move = function() {
+    this.direction = this.nextDirection; // Aplicar la nueva dirección en el próximo ciclo
     const head = { ...this.snakeArray[0] };
 
     if (this.direction === 'LEFT') head.x -= 1;
@@ -57,32 +59,43 @@ function Snake() {
     if (this.direction === 'DOWN') head.y += 1;
 
     this.snakeArray.unshift(head);
-    this.snakeArray.pop();
+
+    // Solo eliminar la cola si no ha comido
+    if (!this.eat(food)) {
+      this.snakeArray.pop();
+    }
   };
 
   this.changeDirection = function(newDirection) {
-    if (this.direction === 'LEFT' && newDirection !== 'RIGHT') this.direction = newDirection;
-    if (this.direction === 'RIGHT' && newDirection !== 'LEFT') this.direction = newDirection;
-    if (this.direction === 'UP' && newDirection !== 'DOWN') this.direction = newDirection;
-    if (this.direction === 'DOWN' && newDirection !== 'UP') this.direction = newDirection;
+    if (
+      (this.direction === 'LEFT' && newDirection !== 'RIGHT') ||
+      (this.direction === 'RIGHT' && newDirection !== 'LEFT') ||
+      (this.direction === 'UP' && newDirection !== 'DOWN') ||
+      (this.direction === 'DOWN' && newDirection !== 'UP')
+    ) {
+      this.nextDirection = newDirection;
+    }
   };
 
   this.eat = function(food) {
     const head = this.snakeArray[0];
     if (head.x === food.x && head.y === food.y) {
-      this.snakeArray.push({ ...this.snakeArray[this.snakeArray.length - 1] });
-      return true;
+      return true; // No eliminamos la cola en `move()`
     }
     return false;
   };
 
   this.checkCollision = function() {
     const head = this.snakeArray[0];
+
+    // Chocar con los bordes
     if (head.x < 0 || head.y < 0 || head.x >= columns || head.y >= rows) return true;
 
+    // Chocar con su propio cuerpo
     for (let i = 1; i < this.snakeArray.length; i++) {
       if (this.snakeArray[i].x === head.x && this.snakeArray[i].y === head.y) return true;
     }
+
     return false;
   };
 }
@@ -103,3 +116,4 @@ function changeDirection(event) {
   if (event.keyCode === 39) snake.changeDirection('RIGHT');
   if (event.keyCode === 40) snake.changeDirection('DOWN');
 }
+
